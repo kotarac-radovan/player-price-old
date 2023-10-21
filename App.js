@@ -5,6 +5,7 @@ import PlayerList from "./components/PlayerList";
 
 export default function App() {
   const [playerCosts, setPlayerCosts] = useState([]);
+  const costDifference = playerCosts.cost;
 
   const fetchPlayerCosts = async () => {
     const response = await fetch(
@@ -16,9 +17,6 @@ export default function App() {
       id: player.id,
       name: player.first_name + " " + player.second_name,
       cost: player.now_cost,
-      previousCost: player.cost_change_start,
-      costDifference: player.now_cost - player.cost_change_start,
-      photo: player.photo,
     }));
 
     setPlayerCosts(playerCosts);
@@ -31,7 +29,11 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <PlayerList playerCosts={playerCosts} />
+      <PlayerList
+        playerCosts={playerCosts.filter(
+          (player) => player.costDifference !== 0
+        )}
+      />
     </View>
   );
 }
@@ -39,11 +41,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "rgb(20,20,20)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  text: {
-    color: "rgb(220,220,220)",
+    backgroundColor: "black",
   },
 });

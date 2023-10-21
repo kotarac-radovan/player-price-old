@@ -1,13 +1,24 @@
-import { View,FlatList, StyleSheet} from 'react-native'
-import React from 'react'
-import PlayerItem from './PlayerItem'
+import { View, FlatList, StyleSheet } from "react-native";
+import PlayerItem from "./PlayerItem";
 
 export default function PlayerList({ playerCosts }) {
   return (
-    <View>
-      <FlatList data={playerCosts} renderItem={({ item }) => <PlayerItem player={item} />}
+    <View style={styles.container}>
+      <FlatList
+        data={playerCosts}
+        renderItem={({ item }) => <PlayerItem player={item} />}
+        style={styles.list}
       />
     </View>
-  )
+  );
 }
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 50,
+    flex: 1,
+    alignItems: "stretch",
+  },
+  list: {
+    flex: 1,
+  },
+});
