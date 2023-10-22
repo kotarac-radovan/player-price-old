@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet } from "react-native";
 
-export default function PlayerItem({ item }) {
+export default function PlayerItem({ name, costDifference }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.playerName}>{item.PlayerName}</Text>
-      <Text style={styles.playerCost}>${item.costDifference}m</Text>
+      <Text style={styles.playerName}>{name}</Text>
+      <Text style={styles.playerCost}>${costDifference}m</Text>
     </View>
   );
 }
