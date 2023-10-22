@@ -125,7 +125,12 @@ const styles = StyleSheet.create({
   text: {
     color: "white",
     fontSize: 18,
-    marginBottom: 80,
+    marginBottom: 100,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
