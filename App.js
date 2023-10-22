@@ -8,13 +8,14 @@ const App = () => {
   const [playerData, setPlayerData] = useState([]);
   const [error, setError] = useState(null);
   const [costDifference, setCostDifference] = useState(0);
+  const [isZero, setIsZero] = useState(true);
 
   const fetchData = async () => {
     try {
       const response = await axios.get(
         "https://fantasy.premierleague.com/api/bootstrap-static/"
       );
-      const data = response.data.elements; // assuming 'elements' is the array of players in the API response
+      const data = response.data.elements;
       await AsyncStorage.setItem("playerData", JSON.stringify(data)); // storing the data on the device
       setPlayerData(data);
     } catch (error) {
@@ -44,26 +45,17 @@ const App = () => {
                   const nowCost = parseFloat(matchedPlayer.now_cost);
                   if (!isNaN(storedCost) && !isNaN(nowCost)) {
                     const difference = nowCost - storedCost;
-                    setCostDifference(difference); // Set the costDifference here
-                    console.log(
-                      `Cost difference for ${matchedPlayer.web_name}: ${difference}`
-                    );
-                  } else {
-                    console.log(
-                      `Invalid cost value for player with ID ${matchedPlayer.id}`
-                    );
+                    if (difference == 0) {
+                      setIsZero(true);
+                      return;
+                    } else {
+                      setIsZero(false);
+                      setCostDifference(difference);
+                    }
                   }
-                } else {
-                  console.log(
-                    `Matched player not found for stored player with ID ${storedPlayer.id}`
-                  );
                 }
               });
-            } else {
-              console.log("Fetched data is empty.");
             }
-          } else {
-            console.log("Parsed data is empty.");
           }
         }
         fetchData();
@@ -88,16 +80,24 @@ const App = () => {
     return <Text>{error}</Text>;
   }
 
-  return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <FlatList
-        data={playerData}
-        renderItem={renderPlayerItem}
-        keyExtractor={(item) => item.id.toString()}
-      />
-    </View>
-  );
+  if (isZero) {
+    return (
+      <View style={[styles.container, styles.textContainer]}>
+        <Text style={styles.text}>No Cost Difference</Text>
+      </View>
+    );
+  } else {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="light" />
+        <FlatList
+          data={filteredData}
+          renderItem={renderPlayerItem}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      </View>
+    );
+  }
 };
 
 export default App;
@@ -106,5 +106,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
+  },
+  text: {
+    color: "white",
+    fontSize: 22,
+  },
+  textContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
