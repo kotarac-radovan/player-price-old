@@ -101,7 +101,7 @@ const App = () => {
         />
       ) : (
         <View style={styles.centeredView}>
-          <Text style={styles.text}>No players to display</Text>
+          <Text style={styles.text}>no players cost change.</Text>
         </View>
       )}
     </View>
