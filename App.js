@@ -1,118 +1,132 @@
 import React, { useEffect, useState } from "react";
-import { View, FlatList, Text, StatusBar, StyleSheet } from "react-native";
+import {
+  View,
+  FlatList,
+  Text,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import PlayerItem from "./components/PlayerItem";
 
 const App = () => {
   const [playerData, setPlayerData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [error, setError] = useState(null);
-  const [costDifference, setCostDifference] = useState(0);
-  const [isZero, setIsZero] = useState(true);
+  const [isDataAvailable, setIsDataAvailable] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(
-        "https://fantasy.premierleague.com/api/bootstrap-static/"
-      );
-      const data = response.data.elements;
-      await AsyncStorage.setItem("playerData", JSON.stringify(data)); // storing the data on the device
-      setPlayerData(data);
-    } catch (error) {
-      setError("Error fetching data. Please check your internet connection.");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          "https://fantasy.premierleague.com/api/bootstrap-static/"
+        );
+        const data = response.data.elements;
+        setPlayerData(data);
+        setFilteredData(data);
+        setIsDataAvailable(true);
+      } catch (error) {
+        console.error("Error retrieving data:", error);
+        setError("Error retrieving data from the server.");
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+    const filteredPlayers = playerData.filter(
+      (item) =>
+        (item.first_name + " " + item.second_name)
+          .toLowerCase()
+          .includes(text.toLowerCase()) &&
+        parseFloat(item.now_cost) - parseFloat(item.now_cost) !== 0
+    );
+    setFilteredData(filteredPlayers);
+  };
+
+  const renderPlayerItem = ({ item }) => {
+    if (!item || !item.now_cost) {
+      return null;
+    }
+
+    const storedCost = parseFloat(item.now_cost);
+    const nowCost = parseFloat(item.now_cost);
+    const difference = nowCost - storedCost;
+
+    if (difference === 0) {
+      return null;
+    } else {
+      return {
+        ...item,
+        difference: difference,
+      };
     }
   };
 
-  useEffect(() => {
-    const getData = async () => {
-      try {
-        const storedData = await AsyncStorage.getItem("playerData");
-        if (storedData !== null) {
-          const parsedData = JSON.parse(storedData);
-          setPlayerData(parsedData);
-          if (parsedData.length > 0) {
-            const response = await axios.get(
-              "https://fantasy.premierleague.com/api/bootstrap-static/"
-            );
-            const fetchedData = response.data.elements;
-            if (fetchedData.length > 0) {
-              parsedData.forEach((storedPlayer) => {
-                const matchedPlayer = fetchedData.find(
-                  (player) => player.id === storedPlayer.id
-                );
-                if (matchedPlayer) {
-                  const storedCost = parseFloat(storedPlayer.now_cost);
-                  const nowCost = parseFloat(matchedPlayer.now_cost);
-                  if (!isNaN(storedCost) && !isNaN(nowCost)) {
-                    const difference = nowCost - storedCost;
-                    if (difference == 0) {
-                      setIsZero(true);
-                      return;
-                    } else {
-                      setIsZero(false);
-                      setCostDifference(difference);
-                    }
-                  }
-                }
-              });
-            }
-          }
-        }
-        fetchData();
-      } catch (error) {
-        console.error("Error retrieving data from storage:", error);
-        setError("Error retrieving data from storage.");
+  const sortedData = filteredData
+    .map(renderPlayerItem)
+    .filter((item) => item)
+    .sort((a, b) => {
+      if (a.difference > 0 && b.difference > 0) {
+        return b.difference - a.difference;
+      } else if (a.difference < 0 && b.difference < 0) {
+        return a.difference - b.difference;
+      } else {
+        return b.difference - a.difference;
       }
-    };
-    getData();
-  }, []);
+    });
 
-  const renderPlayerItem = ({ item }) => {
-    return (
-      <PlayerItem
-        name={item.first_name + "" + item.last_name}
-        costDifference={costDifference}
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search player"
+        value={searchQuery}
+        onChangeText={handleSearch}
       />
-    );
-  };
-
-  if (error) {
-    return <Text>{error}</Text>;
-  }
-
-  if (isZero) {
-    return (
-      <View style={[styles.container, styles.textContainer]}>
-        <Text style={styles.text}>No Cost Difference</Text>
-      </View>
-    );
-  } else {
-    return (
-      <View style={styles.container}>
-        <StatusBar style="light" />
+      {isDataAvailable && sortedData.length > 0 ? (
         <FlatList
-          data={filteredData}
-          renderItem={renderPlayerItem}
+          data={sortedData}
+          renderItem={({ item }) => (
+            <PlayerItem
+              name={`${item.first_name} ${item.second_name}`}
+              costDifference={item.difference}
+            />
+          )}
           keyExtractor={(item) => item.id.toString()}
         />
-      </View>
-    );
-  }
+      ) : (
+        <View style={styles.centeredView}>
+          <Text style={styles.text}>No players to display</Text>
+        </View>
+      )}
+    </View>
+  );
 };
-
-export default App;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
   },
+  searchBar: {
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
+    color: "black",
+    backgroundColor: "white",
+    borderRadius: 18,
+  },
   text: {
     color: "white",
-    fontSize: 22,
-  },
-  textContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    fontSize: 18,
+    marginBottom: 80,
   },
 });
+
+export default App;

@@ -1,13 +1,24 @@
 import { View, Text, StyleSheet } from "react-native";
 
 export default function PlayerItem({ name, costDifference }) {
+  let costColor = "red";
+  let arrowSymbol = "v";
+
+  if (costDifference > 0) {
+    costColor = "green";
+    arrowSymbol = "^";
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.playerName}>{name}</Text>
-      <Text style={styles.playerCost}>${costDifference}m</Text>
+      <Text style={[styles.playerCost, { color: costColor }]}>
+        ${Math.abs(costDifference)}m {arrowSymbol}
+      </Text>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     padding: 8,
@@ -24,7 +35,6 @@ const styles = StyleSheet.create({
     color: "white",
   },
   playerCost: {
-    color: "red",
     fontSize: 20,
     fontWeight: "bold",
   },
